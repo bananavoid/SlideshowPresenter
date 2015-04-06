@@ -1,0 +1,54 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:background="#fffeefff"
+    tools:context=".FullscreenActivity">
+
+    <com.lytvyn.slideshowpresenter.AutoScrollViewPager
+        android:id="@+id/pager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <LinearLayout
+        android:id="@+id/emptyLay"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_gravity="center"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:keepScreenOn="true"
+            android:textColor="#ff414141"
+            android:textStyle="normal"
+            android:textSize="20sp"
+            android:gravity="center"
+            android:text="@string/empty_folder"
+            android:layout_gravity="center" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:keepScreenOn="true"
+            android:textColor="#ff414141"
+            android:textStyle="bold"
+            android:textSize="20sp"
+            android:gravity="center"
+            android:text="@string/please_add"
+            android:layout_gravity="center"
+            android:layout_marginTop="10dp" />
+
+        <ImageButton
+            android:id="@+id/refreshBtn"
+            android:background="@mipmap/ic_action_refresh"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_gravity="center|bottom"
+            android:gravity="center"
+            android:layout_marginTop="20dp"
+            android:onClick="doRefresh"/>
+
+        </LinearLayout>
+
+</FrameLayout>
