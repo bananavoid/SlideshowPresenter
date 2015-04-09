@@ -143,7 +143,6 @@ public class AutoScrollViewPager extends ViewPager {
             interpolatorField.setAccessible(true);
 
             scroller = new CustomDurationScroller(getContext(), (Interpolator)interpolatorField.get(null));
-            scroller.setScrollDurationFactor(600);
             scrollerField.set(this, scroller);
         } catch (Exception e) {
             e.printStackTrace();
@@ -361,9 +360,5 @@ public class AutoScrollViewPager extends ViewPager {
      */
     public void setBorderAnimation(boolean isBorderAnimation) {
         this.isBorderAnimation = isBorderAnimation;
-    }
-
-    public void setScrollDuration(double factor) {
-        this.scroller.setScrollDurationFactor(factor);
     }
 }

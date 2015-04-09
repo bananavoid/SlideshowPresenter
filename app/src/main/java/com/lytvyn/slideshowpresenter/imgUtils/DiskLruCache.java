@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.lytvyn.slideshowpresenter.imgutils;
+package com.lytvyn.slideshowpresenter.imgUtils;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;

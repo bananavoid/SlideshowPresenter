@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.lytvyn.slideshowpresenter.imgutils;
+package com.lytvyn.slideshowpresenter.imgUtils;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -26,10 +26,11 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
-import android.util.Log;
 import android.widget.ImageView;
 
+
 import com.lytvyn.slideshowpresenter.BuildConfig;
+import com.lytvyn.slideshowpresenter.logger.Log;
 
 import java.lang.ref.WeakReference;
 
@@ -183,7 +184,10 @@ public abstract class ImageWorker {
         final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageView);
         if (bitmapWorkerTask != null) {
             bitmapWorkerTask.cancel(true);
-
+            if (BuildConfig.DEBUG) {
+                final Object bitmapData = bitmapWorkerTask.mData;
+                Log.d(TAG, "cancelWork - cancelled work for " + bitmapData);
+            }
         }
     }
 

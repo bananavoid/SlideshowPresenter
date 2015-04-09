@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.lytvyn.slideshowpresenter.imgutils;
+package com.lytvyn.slideshowpresenter.imgUtils;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -23,6 +23,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Build;
 
+import com.lytvyn.slideshowpresenter.BuildConfig;
+import com.lytvyn.slideshowpresenter.logger.Log;
 
 import java.io.FileDescriptor;
 
@@ -87,7 +89,9 @@ public class ImageResizer extends ImageWorker {
      * @return
      */
     private Bitmap processBitmap(int resId) {
-
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "processBitmap - " + resId);
+        }
         return decodeSampledBitmapFromResource(mResources, resId, mImageWidth,
                 mImageHeight, getImageCache());
     }

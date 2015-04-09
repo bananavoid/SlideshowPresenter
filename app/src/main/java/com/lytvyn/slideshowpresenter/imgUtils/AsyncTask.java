@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.lytvyn.slideshowpresenter.imgutils;
+package com.lytvyn.slideshowpresenter.imgUtils;
 
 import android.annotation.TargetApi;
 import android.os.Handler;

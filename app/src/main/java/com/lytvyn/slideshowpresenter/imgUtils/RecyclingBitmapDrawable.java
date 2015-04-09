@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.lytvyn.slideshowpresenter.imgutils;
+package com.lytvyn.slideshowpresenter.imgUtils;
 
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
-import android.util.Log;
 
 import com.lytvyn.slideshowpresenter.BuildConfig;
+import com.lytvyn.slideshowpresenter.logger.Log;
 
 /**
  * A BitmapDrawable that keeps track of whether it is being displayed or cached.

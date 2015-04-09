@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package com.lytvyn.slideshowpresenter.imgutils;
+package com.lytvyn.slideshowpresenter.imgUtils;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.lytvyn.slideshowpresenter.BuildConfig;
 import com.lytvyn.slideshowpresenter.R;
+import com.lytvyn.slideshowpresenter.logger.Log;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -76,7 +76,7 @@ public class ImageFetcher extends ImageResizer {
     }
 
     private void init(Context context) {
-        //checkConnection(context);
+        checkConnection(context);
         mHttpCacheDir = ImageCache.getDiskCacheDir(context, HTTP_CACHE_DIR);
     }
 
@@ -168,15 +168,15 @@ public class ImageFetcher extends ImageResizer {
     *
     * @param context
     */
-//    private void checkConnection(Context context) {
-//        final ConnectivityManager cm =
-//                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-//        final NetworkInfo networkInfo = cm.getActiveNetworkInfo();
-//        if (networkInfo == null || !networkInfo.isConnectedOrConnecting()) {
-//            //Toast.makeText(context, R.string.no_network_connection_toast, Toast.LENGTH_LONG).show();
-//            Log.e(TAG, "checkConnection - no connection found");
-//        }
-//    }
+    private void checkConnection(Context context) {
+        final ConnectivityManager cm =
+                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        final NetworkInfo networkInfo = cm.getActiveNetworkInfo();
+        if (networkInfo == null || !networkInfo.isConnectedOrConnecting()) {
+            //Toast.makeText(context, R.string.no_network_connection_toast, Toast.LENGTH_LONG).show();
+            Log.e(TAG, "checkConnection - no connection found");
+        }
+    }
 
     /**
      * The main process method, which will be called by the ImageWorker in the AsyncTask background
