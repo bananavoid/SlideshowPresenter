@@ -76,9 +76,9 @@ public class LogView extends TextView implements LogNode {
 
         // Handily, the Log class has a facility for converting a stack trace into a usable string.
         String exceptionStr = null;
-        if (tr != null) {
-            exceptionStr = Log.getStackTraceString(tr);
-        }
+//        if (tr != null) {
+//            exceptionStr = Log.getStackTraceString(tr);
+//        }
 
         // Take the priority, tag, message, and exception, and concatenate as necessary
         // into one usable line of text.

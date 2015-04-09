@@ -1,42 +1,37 @@
 package com.lytvyn.slideshowpresenter;
 
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.drive.DriveApi;
+import com.google.android.gms.drive.DriveFolder;
+import com.google.android.gms.drive.DriveId;
+import com.google.android.gms.drive.Metadata;
+import com.google.android.gms.drive.MetadataBuffer;
+import com.google.android.gms.drive.query.Filters;
+import com.google.android.gms.drive.query.Query;
+import com.google.android.gms.drive.query.SearchableField;
+import com.lytvyn.slideshowpresenter.imgUtils.ImageCache;
+import com.lytvyn.slideshowpresenter.imgUtils.ImageFetcher;
+import com.lytvyn.slideshowpresenter.logger.Log;
 import com.lytvyn.slideshowpresenter.util.SystemUiHider;
 
 import android.annotation.TargetApi;
-import android.app.Activity;
-import android.app.KeyguardManager;
-import android.app.admin.DevicePolicyManager;
-import android.content.Context;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
-import android.os.Message;
-import android.os.PowerManager;
-import android.util.Log;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentStatePagerAdapter;
+import android.util.DisplayMetrics;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.Window;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
-import android.widget.Toast;
 
-import org.apache.commons.net.ftp.FTP;
-import org.apache.commons.net.ftp.FTPClient;
-import org.apache.commons.net.ftp.FTPFile;
-import org.apache.commons.net.ftp.FTPReply;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
 
-public class FullscreenActivity extends Activity {
+import com.google.android.gms.drive.Drive;
+
+public class FullscreenActivity extends BaseActivity {
 
     private static final boolean AUTO_HIDE = true;
     private static final int AUTO_HIDE_DELAY_MILLIS = 1000;
@@ -44,19 +39,15 @@ public class FullscreenActivity extends Activity {
     private static final int HIDER_FLAGS = SystemUiHider.FLAG_HIDE_NAVIGATION;
     private SystemUiHider mSystemUiHider;
 
-    private AutoScrollViewPager viewPager;
-    //private LoopViewPager viewPager;
+    private AutoScrollViewPager mViewPager;
 
     private LinearLayout emptyLayout;
 
-    private ArrayList<String> imgPaths;
+    private static final String IMAGE_CACHE_DIR = "images";
+    private ImageFetcher mImageFetcher;
+    private ArrayList<String> mLoadedImagesLinks = new ArrayList<>();
+    private ImagePagerAdapter mAdapter;
 
-    static private final String IMAGES_FOLDER = Environment.getExternalStoragePublicDirectory(
-            Environment.DIRECTORY_PICTURES)
-            + "/MySlideShow";
-
-    private boolean pagerMoved = false;
-    private static final long ANIM_VIEWPAGER_DELAY = 2000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,15 +57,29 @@ public class FullscreenActivity extends Activity {
 
         setContentView(R.layout.activity_fullscreen);
 
+        final DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        final int height = displayMetrics.heightPixels;
+        final int width = displayMetrics.widthPixels;
+
         final View contentView = findViewById(R.id.pager);
         emptyLayout = (LinearLayout) findViewById(R.id.emptyLay);
 
-        viewPager = (AutoScrollViewPager) findViewById(R.id.pager);
-        viewPager.setCycle(true);
-        viewPager.setAutoScrollDurationFactor(3);
-        viewPager.setSlideBorderMode(AutoScrollViewPager.SLIDE_BORDER_MODE_CYCLE);
-        viewPager.setBorderAnimation(true);
-        viewPager.startAutoScroll();
+        final int longest = (height > width ? height : width) / 2;
+
+        ImageCache.ImageCacheParams cacheParams =
+                new ImageCache.ImageCacheParams(this, IMAGE_CACHE_DIR);
+        cacheParams.setMemCacheSizePercent(0.25f); // Set memory cache to 25% of app memory
+
+        mImageFetcher = new ImageFetcher(this, longest);
+        mImageFetcher.addImageCache(getSupportFragmentManager(), cacheParams);
+        mImageFetcher.setImageFadeIn(false);
+
+        mViewPager = (AutoScrollViewPager) findViewById(R.id.pager);
+        mViewPager.setCycle(true);
+        mViewPager.setAutoScrollDurationFactor(3);
+        mViewPager.setSlideBorderMode(AutoScrollViewPager.SLIDE_BORDER_MODE_CYCLE);
+        mViewPager.setBorderAnimation(true);
 
         mSystemUiHider = SystemUiHider.getInstance(this, contentView, HIDER_FLAGS);
         mSystemUiHider.setup();
@@ -97,18 +102,67 @@ public class FullscreenActivity extends Activity {
                         }
                     }
                 });
-
-//        contentView.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                if (TOGGLE_ON_CLICK) {
-//                    mSystemUiHider.toggle();
-//                } else {
-//                    mSystemUiHider.show();
-//                }
-//            }
-//        });
     }
+
+    @Override
+    public void onConnected(Bundle connectionHint) {
+  //      super.onCreate(connectionHint);
+//        setContentView(R.layout.activity_fullscreen);
+//        mResultsListView = (ListView) findViewById(R.id.listViewResults);
+//        mResultsAdapter = new ResultsAdapter(this);
+//        mResultsListView.setAdapter(mResultsAdapter);
+
+        Drive.DriveApi.fetchDriveId(getGoogleApiClient(), EXISTING_FOLDER_ID)
+                .setResultCallback(idCallback);
+
+//        DriveId FOLDER_ID = DriveId.decodeFromString("DriveId:0BzHIUN_rhur0fjh3Nk41VkVaaWVMem5GdHQ0aUNoTm84bE9PQ08ydTBEcXVFbVRYYnVWcGc");
+//
+//
+//        DriveFolder folder = Drive.DriveApi.getFolder(getGoogleApiClient(), FOLDER_ID);
+//        folder.listChildren(getGoogleApiClient()).setResultCallback(metadataResult);
+    }
+
+
+    final private ResultCallback<DriveApi.DriveIdResult> idCallback = new ResultCallback<DriveApi.DriveIdResult>() {
+        @Override
+        public void onResult(DriveApi.DriveIdResult result) {
+            if (!result.getStatus().isSuccess()) {
+                showMessage("Cannot find DriveId. Are you authorized to view this file?");
+                return;
+            }
+            DriveFolder folder = Drive.DriveApi.getFolder(getGoogleApiClient(), result.getDriveId());
+            Query query = new Query.Builder()
+                    .addFilter(Filters.eq(SearchableField.MIME_TYPE, "text/plain"))
+                    .build();
+            folder.queryChildren(getGoogleApiClient(), query)
+                    .setResultCallback(metadataResult);
+            //folder.listChildren(getGoogleApiClient()).setResultCallback(metadataResult);
+
+        }
+        //CAESSDBCekhJVU5fcmh1cjBmamgzTms0MVZrVmFhV1ZNZW01R2RIUTBhVU5vVG04NGJFOVBRMDh5ZFRCRWNYVkZiVlJZWW5WV2NHYximCyD68o-kiFIoAQ==
+    };
+
+    final private ResultCallback<DriveApi.MetadataBufferResult> metadataResult = new
+            ResultCallback<DriveApi.MetadataBufferResult>() {
+                @Override
+                public void onResult(DriveApi.MetadataBufferResult result) {
+                    if (!result.getStatus().isSuccess()) {
+                        showMessage("Problem while retrieving files");
+                        return;
+                    }
+
+                    Log.d("MEtadataSIZE", "SIZE: " + result.getMetadataBuffer().getCount());
+
+                    for (int i=0; i < result.getMetadataBuffer().getCount(); ++i) {
+                        MetadataBuffer metadata = result.getMetadataBuffer();
+                        mLoadedImagesLinks.add(metadata.get(i).getWebContentLink());
+                    }
+
+                    mAdapter = new ImagePagerAdapter(getSupportFragmentManager(), mLoadedImagesLinks.size());
+                    mViewPager.setAdapter(mAdapter);
+                    mViewPager.startAutoScroll();
+                }
+            };
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -151,123 +205,55 @@ public class FullscreenActivity extends Activity {
         mHideHandler.postDelayed(mHideRunnable, delayMillis);
     }
 
-    private void setUpImages() {
-        if (viewPager != null) {
-            imgPaths = getFromSdcard();
-            if (imgPaths.size() == 0) {
-                viewPager.setVisibility(View.GONE);
-                emptyLayout.setVisibility(View.VISIBLE);
-            } else {
-                if (viewPager.getChildCount() != 0) {
-                    viewPager.removeAllViews();
-                }
-
-                ImageAdapter pagerAdapter = new ImageAdapter(this, imgPaths);
-
-                viewPager.setAdapter(pagerAdapter);
-                viewPager.setVisibility(View.VISIBLE);
-                emptyLayout.setVisibility(View.GONE);
-
-                //viewPager.startAutoScroll();
-            }
-        }
-    }
-
-    private ArrayList<String> getFromSdcard() {
-        File storageDir = new File(IMAGES_FOLDER);
-        if (!storageDir.exists()) {
-            storageDir.mkdir();
-        }
-
-        ArrayList<String> paths = new ArrayList<>();
-        File[] listFile;
-
-        if (storageDir.isDirectory()) {
-            listFile = storageDir.listFiles();
-
-            for (int i = 0; i < listFile.length; i++) {
-                paths.add(listFile[i].getAbsolutePath());
-            }
-        }
-
-        return paths;
-    }
 
     public void doRefresh(View v) {
-        setUpImages();
+
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        //viewPager.stopAutoScroll();
+        mViewPager.stopAutoScroll();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        //viewPager.stopAutoScroll();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-//        if (viewPager != null) {
-//            setUpImages();
-//        }
+
+//        Drive.DriveApi.fetchDriveId(getGoogleApiClient(), EXISTING_FOLDER_ID)
+//        .setResultCallback(idCallback);
     }
-//
-//    final Handler handler = new Handler();
-//    Timer swipeTimer = new Timer();
-//    int currentPage = 0;
-//
-//    final Runnable Update = new Runnable() {
-//        public void run() {
-//            if (currentPage == imgPaths.size()) {
-//                currentPage = 0;
-//            }
-//            viewPager.setCurrentItem(currentPage++, true);
-//        }
-//    };
 
-    String serverAddress = "snackmonsterz.com";
-    String userId = "nastya@snackmonsterz.com";
-    String password = "Sl1desh0w";
-    String remoteDirectory = "/images/monsterz";
+    public ImageFetcher getImageFetcher() {
+        return mImageFetcher;
+    }
 
-    private class FtpTask extends AsyncTask<Void, Void, FTPClient> {
-        protected FTPClient doInBackground(Void... args) {
-            boolean status = false;
-            FTPClient mFtpClient = new FTPClient();
-            try {
-                //FTPClient mFtpClient = new FTPClient();
-                mFtpClient.setConnectTimeout(10 * 1000);
-                mFtpClient.connect(InetAddress.getByName(serverAddress));
+    private class ImagePagerAdapter extends FragmentStatePagerAdapter {
+        private final int mSize;
 
-                boolean answer = mFtpClient.sendNoOp();
-
-                status = mFtpClient.login(userId, password);
-                Log.e("isFTPConnected", String.valueOf(status));
-                if (FTPReply.isPositiveCompletion(mFtpClient.getReplyCode())) {
-                    mFtpClient.setFileType(FTP.ASCII_FILE_TYPE);
-                    mFtpClient.enterLocalPassiveMode();
-                    FTPFile[] mFileArray = mFtpClient.listFiles();
-                    Log.e("Size", String.valueOf(mFileArray.length));
-                }
-            } catch (SocketException e) {
-                e.printStackTrace();
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return mFtpClient;
+        public ImagePagerAdapter(FragmentManager fm, int size) {
+            super(fm);
+            mSize = size;
         }
 
-        protected void onPostExecute(FTPClient result) {
-            Log.v("FTPTask","FTP connection complete");
-            //ftpClient = result;
-            //Where ftpClient is a instance variable in the main activity
+        @Override
+        public int getCount() {
+            return mSize;
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            return ImageDetailFragment.newInstance(mLoadedImagesLinks.get(position));
         }
     }
 }
