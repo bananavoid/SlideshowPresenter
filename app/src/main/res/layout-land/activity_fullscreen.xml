@@ -1,24 +1,19 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
     android:layout_height="match_parent" android:background="#fffeefff"
     tools:context=".FullscreenActivity">
 
-    <com.lytvyn.slideshowpresenter.AutoScrollViewPager
-        android:id="@+id/pager"
+    <FrameLayout
+        android:id="@+id/fragmentLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
-
-    <!--<com.lytvyn.slideshowpresenter.LoopViewPager-->
-        <!--android:id="@+id/pager"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="match_parent"></com.lytvyn.slideshowpresenter.LoopViewPager>-->
 
     <LinearLayout
         android:id="@+id/emptyLay"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:layout_gravity="center"
+        android:layout_centerInParent="true"
         android:visibility="gone">
 
         <TextView
@@ -56,4 +51,4 @@
 
         </LinearLayout>
 
-</FrameLayout>
+</RelativeLayout>

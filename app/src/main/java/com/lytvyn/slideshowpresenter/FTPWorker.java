@@ -1,5 +1,6 @@
 package com.lytvyn.slideshowpresenter;
 
+import android.os.Environment;
 import android.util.Log;
 
 import org.apache.commons.net.ftp.FTP;
@@ -16,24 +17,53 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
-/**
- * Created by kosmokapusta on 09.04.15.
- */
-public final class FTPWorker {
 
-    public static void connnectingwithFTP(String ip, String userName, String pass) {
-        boolean status = false;
+public final class FTPWorker {
+    private static File STORAGE_DIR = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + "/SlideshowImages/");
+    private static String SERVER_ADDRESS = "snackmonsterz.com";
+    private static String FTP_USER = "nastya@snackmonsterz.com";
+    private static String FTP_PASSWORD = "Sl1desh0w";
+    private static String REMOTE_DIRECTORY = "/images/monsterz";
+
+    public static FTPClient cacheImagesFromServer() {
+        boolean status ;
+        FTPClient mFtpClient = new FTPClient();
+        String[] okFileExtensions =  new String[] {"jpg", "png","jpeg"};
         try {
-            FTPClient mFtpClient = new FTPClient();
             mFtpClient.setConnectTimeout(10 * 1000);
-            mFtpClient.connect(InetAddress.getByName(ip));
-            status = mFtpClient.login(userName, pass);
-            Log.e("isFTPConnected", String.valueOf(status));
+            mFtpClient.connect(InetAddress.getByName(SERVER_ADDRESS));
+
+            status = mFtpClient.login(FTP_USER, FTP_PASSWORD);
+            Log.d("isFTPConnected", String.valueOf(status));
             if (FTPReply.isPositiveCompletion(mFtpClient.getReplyCode())) {
-                mFtpClient.setFileType(FTP.ASCII_FILE_TYPE);
+                mFtpClient.setFileType(FTP.BINARY_FILE_TYPE);
                 mFtpClient.enterLocalPassiveMode();
-                FTPFile[] mFileArray = mFtpClient.listFiles();
-                Log.e("Size", String.valueOf(mFileArray.length));
+                mFtpClient.changeWorkingDirectory(REMOTE_DIRECTORY);
+                FTPFile[] mImagesArray = mFtpClient.listFiles();
+
+                Log.d("Size mImagesArray", String.valueOf(mImagesArray.length));
+
+                for (int i = 0; i < mImagesArray.length; ++i) {
+                    for (String extension : okFileExtensions)
+                    {
+                        if (mImagesArray[i].getName().toLowerCase().endsWith(extension))
+                        {
+                            String remoteFile = REMOTE_DIRECTORY + '/' + mImagesArray[i].getName();
+
+                            File image = new File(STORAGE_DIR + "/" + mImagesArray[i].getName());
+
+                            OutputStream outputStream1 = new BufferedOutputStream(new FileOutputStream(image));
+
+                            boolean success = mFtpClient.retrieveFile(remoteFile, outputStream1);
+                            outputStream1.flush();
+                            outputStream1.close();
+
+                            if (success) {
+                                Log.d("FTPTask", "File " + mImagesArray[i].getName() +  " has been downloaded successfully.");
+                            }
+                        }
+                    }
+                }
             }
         } catch (SocketException e) {
             e.printStackTrace();
@@ -41,31 +71,17 @@ public final class FTPWorker {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
-        }
-    }
-
-    public static boolean downloadSingleFile(FTPClient ftpClient,
-                                      String remoteFilePath, File downloadFile) {
-        File parentDir = downloadFile.getParentFile();
-        if (!parentDir.exists())
-            parentDir.mkdir();
-        OutputStream outputStream = null;
-        try {
-            outputStream = new BufferedOutputStream(new FileOutputStream(
-                    downloadFile));
-            ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
-            return ftpClient.retrieveFile(remoteFilePath, outputStream);
-        } catch (Exception ex) {
-            ex.printStackTrace();
         } finally {
-            if (outputStream != null) {
-                try {
-                    outputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
+            try {
+                if (mFtpClient.isConnected()) {
+                    mFtpClient.logout();
+                    mFtpClient.disconnect();
                 }
+            } catch (IOException ex) {
+                ex.printStackTrace();
             }
         }
-        return false;
+
+        return mFtpClient;
     }
 }

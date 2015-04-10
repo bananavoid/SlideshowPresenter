@@ -1,62 +1,58 @@
 package com.lytvyn.slideshowpresenter;
 
-import com.lytvyn.slideshowpresenter.util.SystemUiHider;
-
-import android.annotation.TargetApi;
-import android.app.Activity;
-import android.app.KeyguardManager;
-import android.app.admin.DevicePolicyManager;
-import android.content.Context;
+import android.app.ProgressDialog;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
-import android.os.Message;
-import android.os.PowerManager;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
-import android.view.Window;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.Toast;
 
-import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
-import org.apache.commons.net.ftp.FTPFile;
-import org.apache.commons.net.ftp.FTPReply;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
 
-public class FullscreenActivity extends Activity {
+public class FullscreenActivity extends FragmentActivity {
 
-    private static final boolean AUTO_HIDE = true;
-    private static final int AUTO_HIDE_DELAY_MILLIS = 1000;
-    //private static final boolean TOGGLE_ON_CLICK = true;
-    private static final int HIDER_FLAGS = SystemUiHider.FLAG_HIDE_NAVIGATION;
-    private SystemUiHider mSystemUiHider;
+    private static File STORAGE_DIR = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + "/SlideshowImages/");
 
-    private AutoScrollViewPager viewPager;
-    //private LoopViewPager viewPager;
+    private static int UPDATE_IMAGES_INTERVAL = 5000;
 
     private LinearLayout emptyLayout;
+    private FrameLayout fragmentLayout;
 
     private ArrayList<String> imgPaths;
 
-    static private final String IMAGES_FOLDER = Environment.getExternalStoragePublicDirectory(
-            Environment.DIRECTORY_PICTURES)
-            + "/MySlideShow";
+    private ProgressDialog progress;
+    private ImageButton refreshBtn;
 
-    private boolean pagerMoved = false;
-    private static final long ANIM_VIEWPAGER_DELAY = 2000;
+    Handler handler = new Handler();
+    ImageFragment imgFragment;
+
+    final Runnable runnable = new Runnable() {
+        int count = 1;
+
+        public void run() {
+            if (imgPaths.size() != 0) {
+                if (count == imgPaths.size()) {
+                    count = 0;
+                }
+
+                replaceFragment(count);
+
+                ++count;
+
+                handler.postDelayed(runnable, UPDATE_IMAGES_INTERVAL);
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,124 +62,86 @@ public class FullscreenActivity extends Activity {
 
         setContentView(R.layout.activity_fullscreen);
 
-        final View contentView = findViewById(R.id.pager);
+        progress = new ProgressDialog(this);
+        progress.setTitle(getString(R.string.please_wait));
+        progress.setMessage(getString(R.string.loading));
+        progress.setIndeterminate(true);
+        //progress.setMax(100);
+        //progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+
+        clearCacheDirectory();
+
         emptyLayout = (LinearLayout) findViewById(R.id.emptyLay);
+        refreshBtn = (ImageButton)findViewById(R.id.refreshBtn);
+        fragmentLayout = (FrameLayout) findViewById(R.id.fragmentLayout);
 
-        viewPager = (AutoScrollViewPager) findViewById(R.id.pager);
-        viewPager.setCycle(true);
-        viewPager.setAutoScrollDurationFactor(3);
-        viewPager.setSlideBorderMode(AutoScrollViewPager.SLIDE_BORDER_MODE_CYCLE);
-        viewPager.setBorderAnimation(true);
-        viewPager.startAutoScroll();
-
-        mSystemUiHider = SystemUiHider.getInstance(this, contentView, HIDER_FLAGS);
-        mSystemUiHider.setup();
-        mSystemUiHider
-                .setOnVisibilityChangeListener(new SystemUiHider.OnVisibilityChangeListener() {
-                    int mShortAnimTime;
-
-                    @Override
-                    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
-                    public void onVisibilityChange(boolean visible) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-                            if (mShortAnimTime == 0) {
-                                mShortAnimTime = getResources().getInteger(
-                                        android.R.integer.config_shortAnimTime);
-                            }
-                        }
-
-                        if (visible && AUTO_HIDE) {
-                            delayedHide(AUTO_HIDE_DELAY_MILLIS);
-                        }
-                    }
-                });
-
-//        contentView.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                if (TOGGLE_ON_CLICK) {
-//                    mSystemUiHider.toggle();
-//                } else {
-//                    mSystemUiHider.show();
-//                }
-//            }
-//        });
+        new FtpTask().execute();
     }
 
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.ECLAIR
-                && (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_HOME)
-                && event.getRepeatCount() == 0) {
-            //onBackPressed();
+    private void replaceFragment(int count) {
+        imgFragment = new ImageFragment().newInstance(imgPaths.get(count));
+
+        getSupportFragmentManager()
+                .beginTransaction()
+                .setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left)
+                .replace(R.id.fragmentLayout, imgFragment).commit();
+    }
+
+    public void toggleHideyBar() {
+        int uiOptions = getWindow().getDecorView().getSystemUiVisibility();
+        int newUiOptions = uiOptions;
+
+        boolean isImmersiveModeEnabled =
+                ((uiOptions | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY) == uiOptions);
+        if (isImmersiveModeEnabled) {
+            Log.i("BEBEBE", "Turning immersive mode mode off. ");
+        } else {
+            Log.i("BEBEBE", "Turning immersive mode mode on.");
         }
-        return super.onKeyDown(keyCode, event);
-    }
 
-    @Override
-    public void onBackPressed() {
-        // Do nothing
-        return;
-    }
-
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-        delayedHide(50);
-    }
-
-    @Override
-    public void onAttachedToWindow() {
-
-        super.onAttachedToWindow();
-    }
-
-    Handler mHideHandler = new Handler();
-    Runnable mHideRunnable = new Runnable() {
-        @Override
-        public void run() {
-            mSystemUiHider.hide();
+        if (Build.VERSION.SDK_INT >= 14) {
+            newUiOptions ^= View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
         }
-    };
 
-    private void delayedHide(int delayMillis) {
-        mHideHandler.removeCallbacks(mHideRunnable);
-        mHideHandler.postDelayed(mHideRunnable, delayMillis);
+        if (Build.VERSION.SDK_INT >= 16) {
+            newUiOptions ^= View.SYSTEM_UI_FLAG_FULLSCREEN;
+        }
+
+        if (Build.VERSION.SDK_INT >= 18) {
+            newUiOptions ^= View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+        }
+
+        getWindow().getDecorView().setSystemUiVisibility(newUiOptions);
     }
 
     private void setUpImages() {
-        if (viewPager != null) {
-            imgPaths = getFromSdcard();
-            if (imgPaths.size() == 0) {
-                viewPager.setVisibility(View.GONE);
-                emptyLayout.setVisibility(View.VISIBLE);
-            } else {
-                if (viewPager.getChildCount() != 0) {
-                    viewPager.removeAllViews();
-                }
+        imgPaths = getFromSdcard();
+        if (imgPaths.size() == 0) {
+            fragmentLayout.setVisibility(View.GONE);
+            emptyLayout.setVisibility(View.VISIBLE);
+            refreshBtn.clearAnimation();
+        } else {
+            fragmentLayout.setVisibility(View.VISIBLE);
+            emptyLayout.setVisibility(View.GONE);
 
-                ImageAdapter pagerAdapter = new ImageAdapter(this, imgPaths);
+            replaceFragment(0);
 
-                viewPager.setAdapter(pagerAdapter);
-                viewPager.setVisibility(View.VISIBLE);
-                emptyLayout.setVisibility(View.GONE);
+            handler.postDelayed(runnable, UPDATE_IMAGES_INTERVAL);
 
-                //viewPager.startAutoScroll();
-            }
+        }
+
+        if(progress.isShowing()) {
+            progress.dismiss();
         }
     }
 
     private ArrayList<String> getFromSdcard() {
-        File storageDir = new File(IMAGES_FOLDER);
-        if (!storageDir.exists()) {
-            storageDir.mkdir();
-        }
 
         ArrayList<String> paths = new ArrayList<>();
         File[] listFile;
 
-        if (storageDir.isDirectory()) {
-            listFile = storageDir.listFiles();
+        if (STORAGE_DIR.isDirectory()) {
+            listFile = STORAGE_DIR.listFiles();
 
             for (int i = 0; i < listFile.length; i++) {
                 paths.add(listFile[i].getAbsolutePath());
@@ -193,81 +151,64 @@ public class FullscreenActivity extends Activity {
         return paths;
     }
 
-    public void doRefresh(View v) {
-        setUpImages();
+    public void clearCacheDirectory() {
+        if (!STORAGE_DIR.exists()) {
+            STORAGE_DIR.mkdirs();
+        } else {
+            if (STORAGE_DIR.isDirectory()) {
+                String[] children = STORAGE_DIR.list();
+                for (int i = 0; i < children.length; i++) {
+                    new File(STORAGE_DIR, children[i]).delete();
+                }
+            }
+        }
     }
+
+    public void doRefresh(View v) {
+        progress = ProgressDialog.show(this, "Please, wait",
+                "Loading files from server", true);
+        clearCacheDirectory();
+        new FtpTask().execute();
+    }
+
+
 
     @Override
     protected void onStop() {
         super.onStop();
-        //viewPager.stopAutoScroll();
     }
 
     @Override
     protected void onPause() {
+        handler.removeCallbacks(runnable);
         super.onPause();
-        //viewPager.stopAutoScroll();
     }
 
     @Override
     protected void onResume() {
+        //handler.postDelayed(runnable, UPDATE_IMAGES_INTERVAL);
         super.onResume();
-//        if (viewPager != null) {
-//            setUpImages();
-//        }
+        toggleHideyBar();
     }
-//
-//    final Handler handler = new Handler();
-//    Timer swipeTimer = new Timer();
-//    int currentPage = 0;
-//
-//    final Runnable Update = new Runnable() {
-//        public void run() {
-//            if (currentPage == imgPaths.size()) {
-//                currentPage = 0;
-//            }
-//            viewPager.setCurrentItem(currentPage++, true);
-//        }
-//    };
-
-    String serverAddress = "snackmonsterz.com";
-    String userId = "nastya@snackmonsterz.com";
-    String password = "Sl1desh0w";
-    String remoteDirectory = "/images/monsterz";
 
     private class FtpTask extends AsyncTask<Void, Void, FTPClient> {
         protected FTPClient doInBackground(Void... args) {
-            boolean status = false;
-            FTPClient mFtpClient = new FTPClient();
-            try {
-                //FTPClient mFtpClient = new FTPClient();
-                mFtpClient.setConnectTimeout(10 * 1000);
-                mFtpClient.connect(InetAddress.getByName(serverAddress));
+            return FTPWorker.cacheImagesFromServer();
+        }
 
-                boolean answer = mFtpClient.sendNoOp();
-
-                status = mFtpClient.login(userId, password);
-                Log.e("isFTPConnected", String.valueOf(status));
-                if (FTPReply.isPositiveCompletion(mFtpClient.getReplyCode())) {
-                    mFtpClient.setFileType(FTP.ASCII_FILE_TYPE);
-                    mFtpClient.enterLocalPassiveMode();
-                    FTPFile[] mFileArray = mFtpClient.listFiles();
-                    Log.e("Size", String.valueOf(mFileArray.length));
-                }
-            } catch (SocketException e) {
-                e.printStackTrace();
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return mFtpClient;
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            progress.show();
         }
 
         protected void onPostExecute(FTPClient result) {
-            Log.v("FTPTask","FTP connection complete");
-            //ftpClient = result;
-            //Where ftpClient is a instance variable in the main activity
+            setUpImages();
+        }
+
+        @Override
+        protected void onCancelled() {
+            super.onCancelled();
         }
     }
 }

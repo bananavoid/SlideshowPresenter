@@ -2,60 +2,14 @@ package com.lytvyn.slideshowpresenter;
 
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.support.v4.view.PagerAdapter;
 import android.util.DisplayMetrics;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
 
-import java.util.ArrayList;
+public final class ImgUtils {
 
-public class ImageAdapter extends PagerAdapter{
-    Context context;
-    LayoutInflater layoutInflater;
-    ArrayList<String> imgPaths = new ArrayList<String>();
-
-    public ImageAdapter(Context context, ArrayList<String> paths) {
-        this.context = context;
-        layoutInflater = (LayoutInflater) this.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
-        imgPaths = paths;
-    }
-
-    @Override
-    public int getCount() {
-        return imgPaths.size();
-    }
-
-    @Override
-    public boolean isViewFromObject(View view, Object object) {
-        return view == ((ImageView) object);
-    }
-
-    @Override
-    public Object instantiateItem(ViewGroup container, int position) {
-        //View itemView = layoutInflater.inflate(R.layout.pager_item, container, false);
-
-        ImageView imageView = new ImageView(context);
-        Bitmap myBitmap = decodeSampledBitmapByPath(imgPaths.get(position));
-        imageView.setImageBitmap(myBitmap);
-        container.addView(imageView);
-
-        return imageView;
-    }
-
-    @Override
-    public void destroyItem(ViewGroup container, int position, Object object) {
-        container.removeView((ImageView) object);
-    }
-
-    public Bitmap decodeSampledBitmapByPath(String path) {
+    public static Bitmap decodeSampledBitmapByPath(Context context, String path) {
         DisplayMetrics displayMetrics = new DisplayMetrics();
         WindowManager wm = (WindowManager)context.getSystemService(Context.WINDOW_SERVICE);
         wm.getDefaultDisplay().getMetrics(displayMetrics);
