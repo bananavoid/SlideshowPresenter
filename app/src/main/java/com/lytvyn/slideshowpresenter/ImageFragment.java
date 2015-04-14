@@ -9,10 +9,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import com.lytvyn.slideshowpresenter.utils.ImgUtils;
+
 
 public class ImageFragment extends Fragment {
 
-    private static final String IMG_PATH = "param1";
+    private static final String IMG_PATH = "img_path";
 
     private String path;
     private ImageView contentView;
@@ -43,8 +45,9 @@ public class ImageFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.pager_item, null, false);
 
-        ImageView contentView = (ImageView)view.findViewById(R.id.slideImage);
-        Bitmap imgBitmap = ImgUtils.decodeSampledBitmapByPath(getActivity(), path);
+        contentView = (ImageView)view.findViewById(R.id.slideImage);
+        Bitmap imgBitmap = ImgUtils.scaleCenterCrop(getActivity(), path);
+        contentView.setScaleType(ImageView.ScaleType.FIT_CENTER);
         contentView.setImageBitmap(imgBitmap);
         return view;
     }

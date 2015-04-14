@@ -1,7 +1,9 @@
-package com.lytvyn.slideshowpresenter;
+package com.lytvyn.slideshowpresenter.network;
 
 import android.os.Environment;
 import android.util.Log;
+
+import com.lytvyn.slideshowpresenter.utils.CachingWorker;
 
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
@@ -19,7 +21,7 @@ import java.net.UnknownHostException;
 
 
 public final class FTPWorker {
-    private static File STORAGE_DIR = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + "/SlideshowImages/");
+    private static File STORAGE_DIR = CachingWorker.STORAGE_DIR;
     private static String SERVER_ADDRESS = "snackmonsterz.com";
     private static String FTP_USER = "nastya@snackmonsterz.com";
     private static String FTP_PASSWORD = "Sl1desh0w";
