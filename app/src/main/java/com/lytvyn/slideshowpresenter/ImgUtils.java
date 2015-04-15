@@ -4,6 +4,8 @@ package com.lytvyn.slideshowpresenter;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.RectF;
 import android.util.DisplayMetrics;
 import android.view.WindowManager;
 
@@ -26,6 +28,8 @@ public final class ImgUtils {
 
         // Decode bitmap with inSampleSize set
         options.inJustDecodeBounds = false;
+        options.inPreferredConfig = Bitmap.Config.RGB_565;
+        options.inDither = true;
         return BitmapFactory.decodeFile(path, options);
     }
 
@@ -50,5 +54,30 @@ public final class ImgUtils {
         }
 
         return inSampleSize;
+    }
+
+    public static Bitmap scaleCenterCrop(Context context, String path) {
+        Bitmap myBitmap = decodeSampledBitmapByPath(context, path);
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        WindowManager wm = (WindowManager)context.getSystemService(Context.WINDOW_SERVICE);
+        wm.getDefaultDisplay().getMetrics(displayMetrics);
+        final int height = displayMetrics.heightPixels;
+        final int width = displayMetrics.widthPixels;
+        int newWidth = width;
+        int newHeight = height;
+        int sourceWidth = myBitmap.getWidth();
+        int sourceHeight = myBitmap.getHeight();
+        float xScale = (float) newWidth / sourceWidth;
+        float yScale = (float) newHeight / sourceHeight;
+        float scale = Math.max(xScale, yScale);
+        float scaledWidth = scale * sourceWidth;
+        float scaledHeight = scale * sourceHeight;
+        float left = (newWidth - scaledWidth) / 2;
+        float top = (newHeight - scaledHeight) / 2;
+        RectF targetRect = new RectF(left, top, left + scaledWidth, top + scaledHeight);
+        Bitmap scaled = Bitmap.createBitmap(newWidth, newHeight, myBitmap.getConfig());
+        Canvas canvas = new Canvas(scaled);
+        canvas.drawBitmap(myBitmap, null, targetRect, null);
+        return scaled;
     }
 }

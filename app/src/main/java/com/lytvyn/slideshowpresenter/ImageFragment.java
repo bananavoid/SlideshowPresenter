@@ -7,6 +7,7 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.ImageView;
 
 
@@ -35,6 +36,8 @@ public class ImageFragment extends Fragment {
         if (getArguments() != null) {
             path = getArguments().getString(IMG_PATH);
         }
+
+        getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
     }
 
     @Override

@@ -7,12 +7,12 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.support.v4.app.FragmentActivity;
-import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import org.apache.commons.net.ftp.FTPClient;
 
@@ -62,12 +62,12 @@ public class FullscreenActivity extends FragmentActivity {
 
         setContentView(R.layout.activity_fullscreen);
 
+        StayAwake.startStayAwake(this);
+
         progress = new ProgressDialog(this);
         progress.setTitle(getString(R.string.please_wait));
         progress.setMessage(getString(R.string.loading));
         progress.setIndeterminate(true);
-        //progress.setMax(100);
-        //progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
 
         clearCacheDirectory();
 
@@ -76,6 +76,8 @@ public class FullscreenActivity extends FragmentActivity {
         fragmentLayout = (FrameLayout) findViewById(R.id.fragmentLayout);
 
         new FtpTask().execute();
+
+        //setUpImages();
     }
 
     private void replaceFragment(int count) {
@@ -87,17 +89,9 @@ public class FullscreenActivity extends FragmentActivity {
                 .replace(R.id.fragmentLayout, imgFragment).commit();
     }
 
-    public void toggleHideyBar() {
+    public void hideHideyBar() {
         int uiOptions = getWindow().getDecorView().getSystemUiVisibility();
         int newUiOptions = uiOptions;
-
-        boolean isImmersiveModeEnabled =
-                ((uiOptions | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY) == uiOptions);
-        if (isImmersiveModeEnabled) {
-            Log.i("BEBEBE", "Turning immersive mode mode off. ");
-        } else {
-            Log.i("BEBEBE", "Turning immersive mode mode on.");
-        }
 
         if (Build.VERSION.SDK_INT >= 14) {
             newUiOptions ^= View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
@@ -176,19 +170,32 @@ public class FullscreenActivity extends FragmentActivity {
     @Override
     protected void onStop() {
         super.onStop();
+        StayAwake.resumeWakeLock();
     }
 
     @Override
     protected void onPause() {
         handler.removeCallbacks(runnable);
         super.onPause();
+        StayAwake.resumeWakeLock();
     }
 
     @Override
     protected void onResume() {
-        //handler.postDelayed(runnable, UPDATE_IMAGES_INTERVAL);
         super.onResume();
-        toggleHideyBar();
+        StayAwake.resumeWakeLock();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        StayAwake.resumeWakeLock();
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        hideHideyBar();
     }
 
     private class FtpTask extends AsyncTask<Void, Void, FTPClient> {
@@ -209,6 +216,10 @@ public class FullscreenActivity extends FragmentActivity {
         @Override
         protected void onCancelled() {
             super.onCancelled();
+            if (progress.isShowing()) {
+                progress.hide();
+                Toast.makeText(getApplicationContext(), getString(R.string.connection_error), Toast.LENGTH_LONG).show();
+            }
         }
     }
 }
