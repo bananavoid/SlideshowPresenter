@@ -10,6 +10,8 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ImageView;
 
+import com.lytvyn.slideshowpresenter.utils.ImgUtils;
+
 
 public class ImageFragment extends Fragment {
 

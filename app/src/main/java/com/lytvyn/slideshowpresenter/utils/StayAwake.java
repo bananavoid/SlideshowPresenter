@@ -1,4 +1,4 @@
-package com.lytvyn.slideshowpresenter;
+package com.lytvyn.slideshowpresenter.utils;
 
 import android.content.Context;
 import android.os.PowerManager;

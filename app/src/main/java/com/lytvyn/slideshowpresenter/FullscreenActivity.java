@@ -4,7 +4,6 @@ import android.app.ProgressDialog;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.support.v4.app.FragmentActivity;
 import android.view.View;
@@ -14,27 +13,27 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.lytvyn.slideshowpresenter.network.FTPWorker;
+import com.lytvyn.slideshowpresenter.utils.CheckStatusAlarm;
+import com.lytvyn.slideshowpresenter.utils.ImgUtils;
+import com.lytvyn.slideshowpresenter.utils.StayAwake;
+
 import org.apache.commons.net.ftp.FTPClient;
 
-import java.io.File;
 import java.util.ArrayList;
 
 public class FullscreenActivity extends FragmentActivity {
-
-    private static File STORAGE_DIR = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + "/SlideshowImages/");
-
     private static int UPDATE_IMAGES_INTERVAL = 5000;
 
     private LinearLayout emptyLayout;
     private FrameLayout fragmentLayout;
-
     private ArrayList<String> imgPaths;
-
     private ProgressDialog progress;
     private ImageButton refreshBtn;
+    private Handler handler = new Handler();
+    private ImageFragment imgFragment;
 
-    Handler handler = new Handler();
-    ImageFragment imgFragment;
+    public static boolean IS_SLIDESHOW_RUNNING = false;
 
     final Runnable runnable = new Runnable() {
         int count = 1;
@@ -62,22 +61,22 @@ public class FullscreenActivity extends FragmentActivity {
 
         setContentView(R.layout.activity_fullscreen);
 
-        StayAwake.startStayAwake(this);
+        SlideShowApp.startCheckAlarm();
 
         progress = new ProgressDialog(this);
         progress.setTitle(getString(R.string.please_wait));
         progress.setMessage(getString(R.string.loading));
         progress.setIndeterminate(true);
 
-        clearCacheDirectory();
+        //clearCacheDirectory();
 
         emptyLayout = (LinearLayout) findViewById(R.id.emptyLay);
         refreshBtn = (ImageButton)findViewById(R.id.refreshBtn);
         fragmentLayout = (FrameLayout) findViewById(R.id.fragmentLayout);
 
-        new FtpTask().execute();
+        //new FtpTask().execute();
 
-        //setUpImages();
+        setUpImages();
     }
 
     private void replaceFragment(int count) {
@@ -109,7 +108,7 @@ public class FullscreenActivity extends FragmentActivity {
     }
 
     private void setUpImages() {
-        imgPaths = getFromSdcard();
+        imgPaths = ImgUtils.getFromSdcard();
         if (imgPaths.size() == 0) {
             fragmentLayout.setVisibility(View.GONE);
             emptyLayout.setVisibility(View.VISIBLE);
@@ -122,6 +121,8 @@ public class FullscreenActivity extends FragmentActivity {
 
             handler.postDelayed(runnable, UPDATE_IMAGES_INTERVAL);
 
+            IS_SLIDESHOW_RUNNING = true;
+
         }
 
         if(progress.isShowing()) {
@@ -129,48 +130,18 @@ public class FullscreenActivity extends FragmentActivity {
         }
     }
 
-    private ArrayList<String> getFromSdcard() {
-
-        ArrayList<String> paths = new ArrayList<>();
-        File[] listFile;
-
-        if (STORAGE_DIR.isDirectory()) {
-            listFile = STORAGE_DIR.listFiles();
-
-            for (int i = 0; i < listFile.length; i++) {
-                paths.add(listFile[i].getAbsolutePath());
-            }
-        }
-
-        return paths;
-    }
-
-    public void clearCacheDirectory() {
-        if (!STORAGE_DIR.exists()) {
-            STORAGE_DIR.mkdirs();
-        } else {
-            if (STORAGE_DIR.isDirectory()) {
-                String[] children = STORAGE_DIR.list();
-                for (int i = 0; i < children.length; i++) {
-                    new File(STORAGE_DIR, children[i]).delete();
-                }
-            }
-        }
-    }
-
     public void doRefresh(View v) {
         progress = ProgressDialog.show(this, "Please, wait",
                 "Loading files from server", true);
-        clearCacheDirectory();
+        ImgUtils.clearCacheDirectory();
         new FtpTask().execute();
     }
-
-
 
     @Override
     protected void onStop() {
         super.onStop();
         StayAwake.resumeWakeLock();
+        IS_SLIDESHOW_RUNNING = false;
     }
 
     @Override
@@ -190,6 +161,12 @@ public class FullscreenActivity extends FragmentActivity {
     protected void onStart() {
         super.onStart();
         StayAwake.resumeWakeLock();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        SlideShowApp.stopCheckAlarm();
     }
 
     @Override

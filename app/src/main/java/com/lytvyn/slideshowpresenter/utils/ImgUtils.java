@@ -1,4 +1,4 @@
-package com.lytvyn.slideshowpresenter;
+package com.lytvyn.slideshowpresenter.utils;
 
 
 import android.content.Context;
@@ -6,10 +6,15 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.RectF;
+import android.os.Environment;
 import android.util.DisplayMetrics;
 import android.view.WindowManager;
 
+import java.io.File;
+import java.util.ArrayList;
+
 public final class ImgUtils {
+    private static File STORAGE_DIR = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + "/SlideshowImages/");
 
     public static Bitmap decodeSampledBitmapByPath(Context context, String path) {
         DisplayMetrics displayMetrics = new DisplayMetrics();
@@ -79,5 +84,34 @@ public final class ImgUtils {
         Canvas canvas = new Canvas(scaled);
         canvas.drawBitmap(myBitmap, null, targetRect, null);
         return scaled;
+    }
+
+    public static ArrayList<String> getFromSdcard() {
+
+        ArrayList<String> paths = new ArrayList<>();
+        File[] listFile;
+
+        if (STORAGE_DIR.isDirectory()) {
+            listFile = STORAGE_DIR.listFiles();
+
+            for (int i = 0; i < listFile.length; i++) {
+                paths.add(listFile[i].getAbsolutePath());
+            }
+        }
+
+        return paths;
+    }
+
+    public static void clearCacheDirectory() {
+        if (!STORAGE_DIR.exists()) {
+            STORAGE_DIR.mkdirs();
+        } else {
+            if (STORAGE_DIR.isDirectory()) {
+                String[] children = STORAGE_DIR.list();
+                for (int i = 0; i < children.length; i++) {
+                    new File(STORAGE_DIR, children[i]).delete();
+                }
+            }
+        }
     }
 }

@@ -1,4 +1,4 @@
-package com.lytvyn.slideshowpresenter;
+package com.lytvyn.slideshowpresenter.network;
 
 import android.os.Environment;
 import android.util.Log;
