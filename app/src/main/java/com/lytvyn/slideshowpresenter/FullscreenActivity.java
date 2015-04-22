@@ -14,7 +14,6 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.lytvyn.slideshowpresenter.network.FTPWorker;
-import com.lytvyn.slideshowpresenter.utils.CheckStatusAlarm;
 import com.lytvyn.slideshowpresenter.utils.ImgUtils;
 import com.lytvyn.slideshowpresenter.utils.StayAwake;
 
@@ -68,15 +67,15 @@ public class FullscreenActivity extends FragmentActivity {
         progress.setMessage(getString(R.string.loading));
         progress.setIndeterminate(true);
 
-        //clearCacheDirectory();
+        ImgUtils.clearCacheDirectory();
 
         emptyLayout = (LinearLayout) findViewById(R.id.emptyLay);
         refreshBtn = (ImageButton)findViewById(R.id.refreshBtn);
         fragmentLayout = (FrameLayout) findViewById(R.id.fragmentLayout);
 
-        //new FtpTask().execute();
+        new FtpTask().execute();
 
-        setUpImages();
+        //setUpImages();
     }
 
     private void replaceFragment(int count) {
@@ -112,7 +111,6 @@ public class FullscreenActivity extends FragmentActivity {
         if (imgPaths.size() == 0) {
             fragmentLayout.setVisibility(View.GONE);
             emptyLayout.setVisibility(View.VISIBLE);
-            refreshBtn.clearAnimation();
         } else {
             fragmentLayout.setVisibility(View.VISIBLE);
             emptyLayout.setVisibility(View.GONE);
@@ -122,7 +120,6 @@ public class FullscreenActivity extends FragmentActivity {
             handler.postDelayed(runnable, UPDATE_IMAGES_INTERVAL);
 
             IS_SLIDESHOW_RUNNING = true;
-
         }
 
         if(progress.isShowing()) {
@@ -149,6 +146,7 @@ public class FullscreenActivity extends FragmentActivity {
         handler.removeCallbacks(runnable);
         super.onPause();
         StayAwake.resumeWakeLock();
+        IS_SLIDESHOW_RUNNING = false;
     }
 
     @Override

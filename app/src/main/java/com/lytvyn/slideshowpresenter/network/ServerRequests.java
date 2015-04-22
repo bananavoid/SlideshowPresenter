@@ -1,35 +1,66 @@
 package com.lytvyn.slideshowpresenter.network;
 
 import android.content.Context;
+import android.util.Log;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.StringRequest;
+import com.google.gson.JsonObject;
 
-import org.json.JSONArray;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class ServerRequests {
-    private static String GET_ARTICLES_URL = "http://87.251.89.41/application/11424/article/get_articles_list ";
+    private static String POST_STATUS = "http://www.iter8.treasure8.com/keep-alive/key/96f1c840bf799759e65497b775084a84/";
+    private static String TAG = ServerRequests.class.getSimpleName();
 
-    public static void getAllArticlesRequest(Context context, final ServerRequestCallback callback) {
-        JsonArrayRequest jsObjRequest = new JsonArrayRequest(GET_ARTICLES_URL, new Response.Listener<JSONArray>() {
+    public static void postDeviceStatusRequest(
+            Context context,
+            final JsonObject status) {
+
+        StringRequest request = new StringRequest(
+                Request.Method.POST,
+                POST_STATUS,
+                new Response.Listener<String>() {
+
+                    @Override
+                    public void onResponse(String s) {
+                        Log.i(TAG, "POST_SUCCESS: " + s);
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError volleyError) {
+                        Log.i(TAG, "POST_ERROR: " + volleyError.toString());
+                    }
+                })
+        {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                HashMap<String, String> headers = new HashMap<>();
+                headers.put("Accept", "application/json");
+                headers.put("Host", "www.iter8.treasure8.com");
+                headers.put("Content-type", "application/x-www-form-urlencoded");
+                return headers;
+            }
 
             @Override
-            public void onResponse(JSONArray response) {
-                if (callback != null) {
-                    callback.onSuccess(response);
-                }
-            }
-        }, new Response.ErrorListener() {
+            protected Map<String, String> getParams() throws AuthFailureError {
+                HashMap<String, String> params = new HashMap<>();
+                params.put("device_id", status.get("device_id").toString());
+                params.put("battery_level", status.get("battery_level").toString());
+                params.put("location_longitude", status.get("location_longitude").toString());
+                params.put("location_latitude", status.get("location_latitude").toString());
+                params.put("is_slideshow_running", status.get("is_slideshow_running").toString());
 
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                if (callback != null) {
-                    callback.onError(error);
-                }
+                return params;
             }
-        });
+        };
 
-        VolleyQueue.add(context, jsObjRequest);
+        VolleyQueue.add(context, request);
     }
 }

@@ -30,5 +30,6 @@ public class CheckStatusAlarm {
 
     public void stopSheduledTask() {
         alarmManager.cancel(pendingIntent);
+        pendingIntent.cancel();
     }
 }
