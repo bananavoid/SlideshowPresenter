@@ -43,7 +43,7 @@ public class ServerRequests {
             public Map<String, String> getHeaders() throws AuthFailureError {
                 HashMap<String, String> headers = new HashMap<>();
                 headers.put("Accept", "application/json");
-                headers.put("Content-type", "application/x-www-form-urlencoded");
+                headers.put("Content-Type", "application/x-www-form-urlencoded");
                 return headers;
             }
 
