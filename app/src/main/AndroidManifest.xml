@@ -24,13 +24,17 @@
             android:uiOptions="splitActionBarWhenNarrow" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
         <receiver
             android:name=".utils.CheckStatusWakeReceiver"
+            android:enabled="true"
+            android:exported="true" >
+        </receiver>
+        <receiver
+            android:name=".FullscreenActivity$UpdateReceiver"
             android:enabled="true"
             android:exported="true" >
         </receiver>

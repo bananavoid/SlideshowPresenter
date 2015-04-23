@@ -1,25 +1,33 @@
 package com.lytvyn.slideshowpresenter;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.FragmentActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
-import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.lytvyn.slideshowpresenter.network.FTPWorker;
+import com.lytvyn.slideshowpresenter.network.FtpAsyncTask;
+import com.lytvyn.slideshowpresenter.network.TaskCallback;
 import com.lytvyn.slideshowpresenter.utils.ImgUtils;
 import com.lytvyn.slideshowpresenter.utils.StayAwake;
 
 import org.apache.commons.net.ftp.FTPClient;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 
 public class FullscreenActivity extends FragmentActivity {
     private static int UPDATE_IMAGES_INTERVAL = 5000;
@@ -28,9 +36,10 @@ public class FullscreenActivity extends FragmentActivity {
     private FrameLayout fragmentLayout;
     private ArrayList<String> imgPaths;
     private ProgressDialog progress;
-    private ImageButton refreshBtn;
     private Handler handler = new Handler();
     private ImageFragment imgFragment;
+    private AlarmManager alarmManager;
+    private PendingIntent pendingIntent;
 
     public static boolean IS_SLIDESHOW_RUNNING = false;
 
@@ -60,22 +69,24 @@ public class FullscreenActivity extends FragmentActivity {
 
         setContentView(R.layout.activity_fullscreen);
 
-        SlideShowApp.startCheckAlarm();
+        //SlideShowApp.startCheckAlarm();
+        //SlideShowApp.startUpdateAlarm();
+
+        startUpdateSheduledAlarm();
 
         progress = new ProgressDialog(this);
         progress.setTitle(getString(R.string.please_wait));
         progress.setMessage(getString(R.string.loading));
         progress.setIndeterminate(true);
 
-        ImgUtils.clearCacheDirectory();
+        //ImgUtils.clearCacheDirectory();
 
         emptyLayout = (LinearLayout) findViewById(R.id.emptyLay);
-        refreshBtn = (ImageButton)findViewById(R.id.refreshBtn);
         fragmentLayout = (FrameLayout) findViewById(R.id.fragmentLayout);
 
-        new FtpTask().execute();
+        //new FtpTask().execute();
 
-        //setUpImages();
+        setUpImages();
     }
 
     private void replaceFragment(int count) {
@@ -106,7 +117,7 @@ public class FullscreenActivity extends FragmentActivity {
         getWindow().getDecorView().setSystemUiVisibility(newUiOptions);
     }
 
-    private void setUpImages() {
+    public void setUpImages() {
         imgPaths = ImgUtils.getFromSdcard();
         if (imgPaths.size() == 0) {
             fragmentLayout.setVisibility(View.GONE);
@@ -132,6 +143,30 @@ public class FullscreenActivity extends FragmentActivity {
                 "Loading files from server", true);
         ImgUtils.clearCacheDirectory();
         new FtpTask().execute();
+    }
+
+    private void startUpdateSheduledAlarm() {
+        Intent intent = new Intent(this, UpdateReceiver.class);
+        pendingIntent = PendingIntent.getBroadcast(this, 11, intent, 0);
+        alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(System.currentTimeMillis());
+        calendar.set(Calendar.HOUR_OF_DAY, 14);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+
+        alarmManager.setInexactRepeating(
+                AlarmManager.RTC_WAKEUP,
+                calendar.getTimeInMillis(),
+                AlarmManager.INTERVAL_DAY,
+                pendingIntent);
+    }
+
+    private void stopUpdateSheduledAlarm() {
+        alarmManager.cancel(pendingIntent);
+        pendingIntent.cancel();
     }
 
     @Override
@@ -165,6 +200,7 @@ public class FullscreenActivity extends FragmentActivity {
     protected void onDestroy() {
         super.onDestroy();
         SlideShowApp.stopCheckAlarm();
+        stopUpdateSheduledAlarm();
     }
 
     @Override
@@ -195,6 +231,31 @@ public class FullscreenActivity extends FragmentActivity {
                 progress.hide();
                 Toast.makeText(getApplicationContext(), getString(R.string.connection_error), Toast.LENGTH_LONG).show();
             }
+        }
+    }
+
+    public static class UpdateReceiver extends BroadcastReceiver {
+
+        public UpdateReceiver() {
+
+        }
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d("UpdateReceiver inner", "UPDATE RECEIVED");
+
+            FtpAsyncTask task = new FtpAsyncTask(new TaskCallback() {
+                @Override
+                public void onSuccess() {
+                }
+
+                @Override
+                public void onError(String error) {
+
+                }
+            });
+
+            task.execute();
         }
     }
 }

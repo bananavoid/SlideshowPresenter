@@ -11,6 +11,9 @@ import com.android.volley.toolbox.StringRequest;
 import com.google.gson.JsonObject;
 
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,7 +23,7 @@ public class ServerRequests {
 
     public static void postDeviceStatusRequest(
             Context context,
-            final JsonObject status) {
+            final JSONObject status) {
 
         StringRequest request = new StringRequest(
                 Request.Method.POST,
@@ -50,11 +53,15 @@ public class ServerRequests {
             @Override
             protected Map<String, String> getParams() throws AuthFailureError {
                 HashMap<String, String> params = new HashMap<>();
-                params.put("device_id", status.get("device_id").toString());
-                params.put("battery_level", status.get("battery_level").toString());
-                params.put("location_longitude", status.get("location_longitude").toString());
-                params.put("location_latitude", status.get("location_latitude").toString());
-                params.put("is_slideshow_running", status.get("is_slideshow_running").toString());
+                try {
+                    params.put("device_id", status.getString("device_id"));
+                    params.put("battery_level", status.getString("battery_level"));
+                    params.put("location_longitude", status.getString("location_longitude"));
+                    params.put("location_latitude", status.getString("location_latitude"));
+                    params.put("is_slideshow_running", status.getString("is_slideshow_running"));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
 
                 return params;
             }
