@@ -3,6 +3,8 @@ package com.lytvyn.slideshowpresenter.network;
 import android.os.Environment;
 import android.util.Log;
 
+import com.lytvyn.slideshowpresenter.utils.ImgUtils;
+
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
@@ -42,6 +44,8 @@ public final class FTPWorker {
                 FTPFile[] mImagesArray = mFtpClient.listFiles();
 
                 Log.d("Size mImagesArray", String.valueOf(mImagesArray.length));
+
+                ImgUtils.clearCacheDirectory();
 
                 for (int i = 0; i < mImagesArray.length; ++i) {
                     for (String extension : okFileExtensions)

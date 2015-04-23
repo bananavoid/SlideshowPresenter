@@ -4,10 +4,6 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
-
-import com.lytvyn.slideshowpresenter.FullscreenActivity;
-import com.lytvyn.slideshowpresenter.network.TaskCallback;
 
 import java.util.Calendar;
 
@@ -21,7 +17,7 @@ public class UpdateAlarm {
     public UpdateAlarm(Context context) {
         this.appContext = context;
 
-        intent = new Intent(context, FullscreenActivity.UpdateReceiver.class);
+        intent = new Intent(context, UpdateReceiver.class);
         pendingIntent = PendingIntent.getBroadcast(context, 11, intent, 0);
         alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
     }
@@ -29,7 +25,7 @@ public class UpdateAlarm {
     public void runSheduledTask() {
         calendar = Calendar.getInstance();
         calendar.setTimeInMillis(System.currentTimeMillis());
-        calendar.set(Calendar.HOUR_OF_DAY, 13);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
 
