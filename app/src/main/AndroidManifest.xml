@@ -34,7 +34,7 @@
             android:exported="true" >
         </receiver>
         <receiver
-            android:name=".FullscreenActivity$UpdateReceiver"
+            android:name=".utils.UpdateReceiver"
             android:enabled="true"
             android:exported="true" >
         </receiver>

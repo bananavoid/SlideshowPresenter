@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
+import com.lytvyn.slideshowpresenter.FullscreenActivity;
 import com.lytvyn.slideshowpresenter.network.TaskCallback;
 
 import java.util.Calendar;
@@ -19,19 +20,8 @@ public class UpdateAlarm {
 
     public UpdateAlarm(Context context) {
         this.appContext = context;
-        UpdateReceiver receiver = new UpdateReceiver(new TaskCallback() {
-            @Override
 
-            public void onSuccess() {
-                Log.d("UpdateAlarm separate", "UPDATE RECEIVED");
-            }
-
-            @Override
-            public void onError(String error) {
-
-            }
-        });
-        intent = new Intent(context, receiver.getClass());
+        intent = new Intent(context, FullscreenActivity.UpdateReceiver.class);
         pendingIntent = PendingIntent.getBroadcast(context, 11, intent, 0);
         alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
     }

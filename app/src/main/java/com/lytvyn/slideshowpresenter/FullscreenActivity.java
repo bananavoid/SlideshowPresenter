@@ -6,6 +6,7 @@ import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -23,6 +24,7 @@ import com.lytvyn.slideshowpresenter.network.FtpAsyncTask;
 import com.lytvyn.slideshowpresenter.network.TaskCallback;
 import com.lytvyn.slideshowpresenter.utils.ImgUtils;
 import com.lytvyn.slideshowpresenter.utils.StayAwake;
+import com.lytvyn.slideshowpresenter.utils.UpdateReceiver;
 
 import org.apache.commons.net.ftp.FTPClient;
 
@@ -40,6 +42,8 @@ public class FullscreenActivity extends FragmentActivity {
     private ImageFragment imgFragment;
     private AlarmManager alarmManager;
     private PendingIntent pendingIntent;
+    //boolean mIsReceiverRegistered = false;
+    //UpdateReceiver mReceiver = null;
 
     public static boolean IS_SLIDESHOW_RUNNING = false;
 
@@ -71,6 +75,8 @@ public class FullscreenActivity extends FragmentActivity {
 
         //SlideShowApp.startCheckAlarm();
         //SlideShowApp.startUpdateAlarm();
+
+        //mReceiver = new UpdateReceiver();
 
         startUpdateSheduledAlarm();
 
@@ -146,14 +152,15 @@ public class FullscreenActivity extends FragmentActivity {
     }
 
     private void startUpdateSheduledAlarm() {
-        Intent intent = new Intent(this, UpdateReceiver.class);
+
+        Intent intent = new Intent(this, com.lytvyn.slideshowpresenter.utils.UpdateReceiver.class);
         pendingIntent = PendingIntent.getBroadcast(this, 11, intent, 0);
         alarmManager = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
 
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(System.currentTimeMillis());
-        calendar.set(Calendar.HOUR_OF_DAY, 14);
-        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.HOUR_OF_DAY, 15);
+        calendar.set(Calendar.MINUTE, 20);
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
 
@@ -188,6 +195,7 @@ public class FullscreenActivity extends FragmentActivity {
     protected void onResume() {
         super.onResume();
         StayAwake.resumeWakeLock();
+        Log.d("FULLSCREENACTIVITY", "onResume");
     }
 
     @Override
@@ -234,28 +242,25 @@ public class FullscreenActivity extends FragmentActivity {
         }
     }
 
-    public static class UpdateReceiver extends BroadcastReceiver {
-
-        public UpdateReceiver() {
-
-        }
+    public class UpdateReceiver extends BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d("UpdateReceiver inner", "UPDATE RECEIVED");
 
-            FtpAsyncTask task = new FtpAsyncTask(new TaskCallback() {
-                @Override
-                public void onSuccess() {
-                }
-
-                @Override
-                public void onError(String error) {
-
-                }
-            });
-
-            task.execute();
+//            FtpAsyncTask task = new FtpAsyncTask(new TaskCallback() {
+//                @Override
+//                public void onSuccess() {
+//                    setUpImages();
+//                }
+//
+//                @Override
+//                public void onError(String error) {
+//
+//                }
+//            });
+//
+//            task.execute();
         }
     }
 }
