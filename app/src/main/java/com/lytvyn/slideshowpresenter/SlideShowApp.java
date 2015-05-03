@@ -1,7 +1,6 @@
 package com.lytvyn.slideshowpresenter;
 
 import android.app.Application;
-import android.provider.Settings;
 
 import com.lytvyn.slideshowpresenter.utils.BatteryTracker;
 import com.lytvyn.slideshowpresenter.utils.CheckStatusAlarm;
@@ -21,7 +20,7 @@ public class SlideShowApp extends Application {
         statusAlarm = new CheckStatusAlarm(this);
         updateAlarm = new UpdateAlarm(this);
         gpsTracker = new GPSTracker(this);
-        batteryTracker = new BatteryTracker(this);
+        //batteryTracker = new BatteryTracker(this);
     }
 
     public static void startCheckAlarm() {
@@ -44,7 +43,7 @@ public class SlideShowApp extends Application {
         return gpsTracker;
     }
 
-    public static BatteryTracker getBatteryTracker() {
-        return batteryTracker;
-    }
+//    public static BatteryTracker getBatteryTracker() {
+//        return batteryTracker;
+//    }
 }

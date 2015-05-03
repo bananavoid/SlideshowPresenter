@@ -59,6 +59,7 @@ public class ServerRequests {
                     params.put("location_longitude", status.getString("location_longitude"));
                     params.put("location_latitude", status.getString("location_latitude"));
                     params.put("is_slideshow_running", status.getString("is_slideshow_running"));
+
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }

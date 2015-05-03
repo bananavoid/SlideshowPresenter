@@ -64,6 +64,8 @@ public class FullscreenActivity extends FragmentActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        Log.d("DEBUG", "onCreate");
+
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         setContentView(R.layout.activity_fullscreen);
@@ -72,8 +74,6 @@ public class FullscreenActivity extends FragmentActivity {
 
         SlideShowApp.startCheckAlarm();
         SlideShowApp.startUpdateAlarm();
-
-        createFTPAsyncTask();
 
         createProgressDialog();
 
@@ -115,7 +115,8 @@ public class FullscreenActivity extends FragmentActivity {
         progress = new ProgressDialog(this);
         progress.setTitle(getString(R.string.please_wait));
         progress.setMessage(getString(R.string.loading));
-        progress.setIndeterminate(true);
+        progress.setIndeterminate(false);
+        progress.setCancelable(false);
     }
 
     public void setUpImages() {
@@ -151,7 +152,7 @@ public class FullscreenActivity extends FragmentActivity {
                         progress.dismiss();
                     }
 
-                    Toast.makeText(getBaseContext(), "Error while loading files", Toast.LENGTH_LONG);
+                    Toast.makeText(getBaseContext(), "Error while loading files", Toast.LENGTH_LONG).show();
                 }
             });
         }
@@ -170,35 +171,41 @@ public class FullscreenActivity extends FragmentActivity {
 
     @Override
     protected void onStop() {
+        Log.d("DEBUG", "onStop");
         super.onStop();
-        StayAwake.resumeWakeLock();
+        onTrimMemory(TRIM_MEMORY_UI_HIDDEN);
         IS_SLIDESHOW_RUNNING = false;
     }
 
     @Override
     protected void onPause() {
+        Log.d("DEBUG", "onPause");
         handler.removeCallbacks(runnable);
         super.onPause();
-        StayAwake.resumeWakeLock();
         IS_SLIDESHOW_RUNNING = false;
     }
 
     @Override
     protected void onResume() {
+        Log.d("DEBUG", "onResume");
+
+        handler.removeCallbacks(runnable);
         super.onResume();
-        StayAwake.resumeWakeLock();
         IS_SLIDESHOW_RUNNING = false;
+        //setUpImages();
         getImagesFromFTP();
     }
 
     @Override
     protected void onStart() {
+        Log.d("DEBUG", "onStart");
         super.onStart();
-        StayAwake.resumeWakeLock();
     }
 
     @Override
     protected void onDestroy() {
+        Log.d("DEBUG", "onDestroy");
+
         super.onDestroy();
         SlideShowApp.stopCheckAlarm();
         SlideShowApp.stopUpdateAlarm();

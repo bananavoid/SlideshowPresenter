@@ -6,15 +6,12 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.BatteryManager;
 
-public class BatteryTracker {
-    private Intent statusIntent;
+public final class BatteryTracker {
 
-    public BatteryTracker(Context context) {
+    public static float getBatteryLevel(Context context) {
         IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-        statusIntent = context.registerReceiver(null, ifilter);
-    }
+        Intent statusIntent = context.registerReceiver(null, ifilter);
 
-    public float getBatteryLevel() {
         String batteryStatus = "";
         int status = statusIntent.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
         boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||

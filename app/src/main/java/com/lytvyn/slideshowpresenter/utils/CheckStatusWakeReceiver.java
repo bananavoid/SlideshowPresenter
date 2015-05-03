@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.location.Location;
 import android.provider.Settings;
 import android.support.v4.content.WakefulBroadcastReceiver;
+import android.util.Log;
+import android.widget.Toast;
 
 import com.lytvyn.slideshowpresenter.FullscreenActivity;
 import com.lytvyn.slideshowpresenter.SlideShowApp;
@@ -18,7 +20,7 @@ public class CheckStatusWakeReceiver extends WakefulBroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         Location location = SlideShowApp.getGpsTracker().getLocation();
-        float batteryLevel = SlideShowApp.getBatteryTracker().getBatteryLevel();
+        float batteryLevel = BatteryTracker.getBatteryLevel(context);
 
         JSONObject deviceStatusJson = new JSONObject();
         try {
@@ -30,6 +32,8 @@ public class CheckStatusWakeReceiver extends WakefulBroadcastReceiver {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+
+        Log.d("CheckStatusWakeReceiver", "PARAMS: " + deviceStatusJson.toString());
 
         ServerRequests.postDeviceStatusRequest(context, deviceStatusJson);
     }

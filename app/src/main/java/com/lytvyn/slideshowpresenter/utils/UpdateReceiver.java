@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.lytvyn.slideshowpresenter.FullscreenActivity;
 
@@ -17,5 +18,7 @@ public class UpdateReceiver extends BroadcastReceiver {
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         i.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         context.startActivity(i);
+
+        //Toast.makeText(context, "Update received", Toast.LENGTH_LONG).show();
     }
 }
